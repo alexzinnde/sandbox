@@ -9,55 +9,33 @@
     <div class="flex-column-container full-body">
       <h2 class="title">Demo MsePlayer Module</h2>
       <p class="text-center">Local ISOBMFF Unencrypted Media Segments</p>
-      <div class="flex-row-container">
-        <div id="video-container">
-          <video
-            style="height: 480px; width: 640px; background: black;"
-            muted
-            controls
-          ></video>
-        </div>
-        <div id="steps-container">
-          <h3>Steps</h3>
-          <ul>
-            <li>1. Demo Fetch segments</li>
-            <li>2. Start feeder</li>
-            <li>3. Video Playback</li>
-          </ul>
-        </div>
-        <div id="status-container">
-          <h3>MsePlayer</h3>
-          <ul>
-            <li>
-              <li><span style="font-weight: 600;">isoBmffSegments: </span><span id="mseplayer-isobmffsegments"></span></li>
-              <li><span style="font-weight: 600;">segments pushed: </span><span id="mseplayer-segmentspushed"></span></li>
-              <li><span style="font-weight: 600;">segments appended: </span><span id="mseplayer-segmentsappended"></span></li>
-              <li><span style="font-weight: 600;">IS Received: </span><span id="mseplayer-isreceived"></span></li>
-            </li>
-            <li>
-              <h3>Media Source</h3>
-              <ul>
-                <li><span style="font-weight: 600;">readyState: </span><span id="mse-readystate">closed</span></li>
-                <li><span style="font-weight: 600;">sourceBuffers: </span><span id="mse-sourceBuffers"></span></li>
-                <li><span style="font-weight: 600;">activeSourceBuffers: </span><span id="mse-activeSourceBuffers"></span></li>
-              </ul>
-            </li>
-            <li>
-              <h3>Active Source Buffer</h3>
-              <ul>
-                <li><span style="font-weight: 600;">state: </span><span id="asb-state"></span></li>
-                <li><span style="font-weight: 600;">mimeCodecType: </span><span id="asb-mimecodectype"></span></li>
-              </ul>
-            </li>
-          </ul>
-        </div>
+      <div id="videos-container">
+        <video
+          id="video-1"
+          style="height: 240px; width: 320px; background: black"
+          muted
+        ></video>
+        <video
+          id="video-2"
+          style="height: 240px; width: 320px; background: black"
+          muted
+        ></video>
+        <video
+          id="video-3"
+          style="height: 240px; width: 320px; background: black"
+          muted
+        ></video>
+        <video
+          id="video-4"
+          style="height: 240px; width: 320px; background: black"
+          muted
+        ></video>
       </div>
       <div id="controls-container">
         <button id="start-button">Start</button>
         <button id="stop-feeder-button">Stop Feeder</button>
         <button id="log-button">LOG</button>
       </div>
-      
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

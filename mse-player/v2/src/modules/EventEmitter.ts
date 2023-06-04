@@ -7,7 +7,8 @@ export type MseEventDetailsType = {
   activeSourceBuffers?: SourceBufferList
   isoBmffSegments?: number
   sourceBufferError?: unknown
-  videoElementErrorEvent?: Event | string
+  videoElementErrorEvent?: Event | string,
+  mediaSourceReadyState?: string
 }
 
 

@@ -5,7 +5,7 @@ body {
 }
 
 button {
-  width: 100px;
+  width: 130px;
 }
 
 video {
@@ -45,37 +45,14 @@ ul {
   display: flex;
   flex-direction: column;
   margin: auto;
-  align-content: start;
-  align-items: flex-start;
 }
 
-.flex-row-container {
-  display: flex;
-  flex-direction: row;
+#videos-container {
+  width: fit-content;
   margin: auto;
-  
-}
-
-.controls {
-  border: 2px solid black;
-}
-
-#video-container {
-  width: 640px;
-  height: fit-content;
-}
-
-#status-container {
-  width: 800px;
-  margin-left: 40px;
 }
 
 #controls-container {
   width: fit-content;
-  height: fit-content;
   margin: auto;
-  text-align: center;
-  border: 1px dotted black;
-  margin: 10px auto;
-  padding: 20px;
 }
