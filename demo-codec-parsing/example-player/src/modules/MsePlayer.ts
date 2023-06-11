@@ -53,7 +53,7 @@ function initializeMediaSource(this: MsePlayer) {
       console.error('[SourceBuffer] error [%o]', e)
     }
     this._sourceBuffer.onabort = () => {
-      console.warn('[SourceBuffer] abort')
+      // console.warn('[SourceBuffer] abort')
     }
     this._sourceBuffer.onupdatestart = () => {
       // console.warn('[SourceBuffer] updatestart')
@@ -67,10 +67,10 @@ function initializeMediaSource(this: MsePlayer) {
     }
   }
   this._mediaSource.onsourceclose = () => {
-    console.error('[MediaSource] Event [sourceclose]')
+    // console.error('[MediaSource] Event [sourceclose]')
   }
   this._mediaSource.onsourceended = () => {
-    console.error('[MediaSource] Event [sourceended]')
+    // console.error('[MediaSource] Event [sourceended]')
   }
   this._mediaElement.src = URL.createObjectURL(this._mediaSource);
   this._mediaElement.play()
@@ -81,6 +81,7 @@ function detachMedia(this: MsePlayer) {
   this._mediaElement?.pause()
   this._playbackStartedAt = 0
   this._sourceBuffer?.abort()
+
   if (this._sourceBuffer) {
     this._mediaSource.removeSourceBuffer(this._sourceBuffer)
   }
@@ -99,9 +100,7 @@ function feedSourceBuffer(this: MsePlayer) {
 }
 
 function onMediaPlay(this: MsePlayer) {
-  const playbackStartedAt = Date.now();
-  console.log('[MediaElement] Event [play] setting playbackStartedAt to [%s]', playbackStartedAt);
-  this._playbackStartedAt = playbackStartedAt;
+  this._playbackStartedAt = Date.now();
 }
 
 function onMediaStalled(this: MsePlayer) {
@@ -157,7 +156,7 @@ export default class MsePlayer {
         error: logEvent.bind(this, 'MsePlayer] [MediaElement', 'error', 'error'),
         invalid: logEvent.bind(this, 'MsePlayer] [MediaElement', 'invalid', 'error'),
         pause: logEvent.bind(this, 'MsePlayer] [MediaElement', 'pause', 'info'),
-        waiting: logEvent.bind(this, 'MsePlayer] [MediaElement', 'waiting', 'error'),
+        waiting: logEvent.bind(this, 'MsePlayer] [MediaElement', 'waiting', 'info'),
         playing: () => { },
         progress: () => { },
         ratechange: () => { },
@@ -171,6 +170,7 @@ export default class MsePlayer {
   public log() {
     console.log('[MsePlayer] PreBuffer [%o]', this._preBuffer);
     console.log('[MsePlayer] sourceBuffer [%o]', this._sourceBuffer);
+
   }
 
   public pushChunk(chunk: ArrayBuffer) {

@@ -8,31 +8,37 @@ export type PlayerConfigType = {
 }
 
 export default class Player {
+  private _streamUrl: string
   private _streamReader: StreamReader
   private _mediaElement: HTMLMediaElement
-  private _decoder: MsePlayer
+  private _player: MsePlayer
 
-  constructor({streamUrl, mediaElement}: PlayerConfigType) {
-    this._streamReader = new StreamReader(streamUrl)
+  constructor({ streamUrl, mediaElement }: PlayerConfigType) {
+    this._streamUrl = streamUrl;
     this._mediaElement = mediaElement;
-    this._initialize()
+  }
+
+  public log() {
+    this._player.log()
   }
 
   public play() {
-    this._decoder.startPlayback(this._mediaElement)
-    this._streamReader.readStream(this._decoder.pushChunk.bind(this._decoder))
+    this._initialize()
   }
 
   public stop() {
-    this._decoder.stop()
+    this._player.stop()
+    delete this._player
   }
 
   private _initialize() {
-    this._decoder = new MsePlayer({
+    this._streamReader = new StreamReader(this._streamUrl)
+    this._player = new MsePlayer({
       mimeCodecType: this._streamReader.mimeCodecType,
       sourceBufferMode: 'sequence',
       mediaElement: this._mediaElement
     })
-    
+    this._streamReader.readStream(this._player.pushChunk.bind(this._player))
+    this._player.startPlayback(this._mediaElement)
   }
 }

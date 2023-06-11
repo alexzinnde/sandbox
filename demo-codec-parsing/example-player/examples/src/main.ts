@@ -29,6 +29,6 @@ stopStreamButton!.onclick = () => {
   // stream.stopStream()
 }
 logButton!.onclick = () => {
-  // player.log()
-  console.log(player)
+  player.log()
+  
 }
