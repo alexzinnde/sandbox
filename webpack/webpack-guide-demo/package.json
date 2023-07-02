@@ -1,0 +1,20 @@
+{
+  "name": "webpack-guide-demo",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "prebuild": "npm i",
+    "build": "webpack"
+  },
+  "keywords": [],
+  "author": "Alexander Zinn",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
