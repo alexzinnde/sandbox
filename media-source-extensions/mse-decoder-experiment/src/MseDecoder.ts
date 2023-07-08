@@ -20,22 +20,25 @@ export type PendingTrackWriterCreates = {
   resolveTrackWriter: (trackWriter: TrackWriter) => void;
 }[];
 
+export type MseDecoderOptionsType = {
+  sourceBufferMode?: AppendMode;
+}
+
 export default class MseDecoder {
   public status: ReadyState;
   private _videoElement: HTMLVideoElement;
+  private _options?: MseDecoderOptionsType;
   private _mediaSource: MediaSource;
   private _trackBuffers: TrackBuffers;
   private _pendingTrackWriterCreates: PendingTrackWriterCreates;
 
-  private _options?: Record<string, string>;
-
-  constructor(videoElement: HTMLVideoElement, options?: {}) {
+  constructor(videoElement: HTMLVideoElement, options?: MseDecoderOptionsType) {
     this.status = 'closed';
     this._videoElement = videoElement;
+    this._options = options;
     this._trackBuffers = {} as TrackBuffers;
     this._mediaSource = new MediaSource();
     this._pendingTrackWriterCreates = [];
-    this._options = options;
 
     this._initialize();
   }
@@ -93,6 +96,7 @@ export default class MseDecoder {
     }
 
     const sourceBuffer = this._mediaSource.addSourceBuffer(mimeCodecType);
+    sourceBuffer.mode = this._options?.sourceBufferMode ?? 'segments';
     this._trackBuffers[trackType] = {
       mimeCodecType,
       buffer: [],
