@@ -30,7 +30,6 @@ export default function configureForClearKey(mediaElement: HTMLMediaElement) {
           console.log('[step 7] onKeySessionMessage -> fetch license with payload');
           console.log('[onKeySessionMessage] messageType [%o] message [%o]', messageType, message);
 
-
           const license = te.encode(`{"keys":[{"kty":"oct","k":"${demoClearKeys[1]}","kid":"${demoClearKeys[0]}"}],"type":"temporary"}`);
           keySession?.update(license).catch(console.error.bind(console, 'update() failed'));
         };

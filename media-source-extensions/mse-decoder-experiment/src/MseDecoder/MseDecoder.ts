@@ -71,10 +71,12 @@ export default class MseDecoder {
     this._mediaSource.onsourceended = () => {
       console.warn('[MseDecoder] [MediaSource] [sourceended]');
       this.status = 'ended';
+      this._videoElement.src = '';
     };
     this._mediaSource.onsourceclose = () => {
       console.log('[MseDecoder] [MediaSource] [sourceclose]');
       this.status = 'closed';
+      this._videoElement.src = URL.createObjectURL(this._mediaSource);
     };
     this._mediaSource.onsourceopen = () => {
       console.log('[MseDecoder] [MediaSource] [sourceopen]');
@@ -95,11 +97,7 @@ export default class MseDecoder {
   }
 
   private _generateNewTrackBufferForTrack(mimeCodecType: string, resolveWriteTrackPromise: (trackWriter: TrackWriter) => void): void {
-    console.log(
-      '[MseDecoder] [generateNewTrackBufferForTrack] mimeCodecType [%s] writeTrackPromise [%o] Start',
-      mimeCodecType,
-      resolveWriteTrackPromise
-    );
+    console.log('[MseDecoder] [generateNewTrackBufferForTrack] mimeCodecType [%s] writeTrackPromise [%o] Start', mimeCodecType, resolveWriteTrackPromise);
 
     if (this._mediaSource.readyState === 'open') {
       return this._createTrackBufferForTrack(mimeCodecType, resolveWriteTrackPromise);
