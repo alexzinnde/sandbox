@@ -24,6 +24,17 @@ export type MseDecoderOptionsType = {
   sourceBufferMode?: AppendMode;
 };
 
+export type MseDecoderStatisticsType = {
+  timestamp: number;
+  currentTime: number;
+  width: number;
+  height: number;
+  bytesReceived: number;
+  bytesDecoded: number;
+  framesReceived: number;
+  framesDecoded: number;
+};
+
 export default class MseDecoder {
   public status: ReadyState;
   private _videoElement: HTMLVideoElement;
@@ -31,6 +42,7 @@ export default class MseDecoder {
   private _mediaSource: MediaSource;
   private _trackBuffers: TrackBuffers;
   private _pendingTrackWriterCreates: PendingTrackWriterCreates;
+  private _stats: MseDecoderStatisticsType;
 
   constructor(videoElement: HTMLVideoElement, options?: MseDecoderOptionsType) {
     this.status = 'closed';
@@ -39,6 +51,16 @@ export default class MseDecoder {
     this._trackBuffers = {} as TrackBuffers;
     this._mediaSource = new MediaSource();
     this._pendingTrackWriterCreates = [];
+    this._stats = {
+      timestamp: 0,
+      currentTime: 0,
+      width: 0,
+      height: 0,
+      bytesReceived: 0,
+      bytesDecoded: 0,
+      framesReceived: 0,
+      framesDecoded: 0,
+    };
 
     this._initialize();
   }
@@ -55,6 +77,16 @@ export default class MseDecoder {
         resolveTrackWriter
       });
     });
+  }
+
+  public getStats(): MseDecoderStatisticsType {
+    return {
+      ...this._stats,
+      currentTime: this._videoElement.currentTime,
+      width: this._videoElement.videoWidth ?? this._videoElement.style.width ?? 0,
+      height: this._videoElement.videoHeight ?? this._videoElement.style.height ?? 0,
+      timestamp: Date.now()
+    };
   }
 
   private _initialize() {
@@ -107,8 +139,10 @@ export default class MseDecoder {
       console.warn('[MseDecoder] [SourceBuffer] [%s] error', trackType);
     };
     sourceBuffer.onupdate = () => {
-      this._options?.debug && console.log('[MseDecoder] [SourceBuffer] [%s] update', trackType);
+      console.log('[MseDecoder] [SourceBuffer] [%s] update', trackType);
       this._trackBuffers[trackType].buffer[0].resolveStatusPromise('OK');
+      this._stats.bytesDecoded += this._trackBuffers[trackType].buffer[0].data.byteLength;
+      this._stats.framesDecoded += 1;
       this._trackBuffers[trackType].buffer.shift();
 
       if (this._trackBuffers[trackType].buffer.length) {
@@ -117,6 +151,9 @@ export default class MseDecoder {
     };
 
     const trackWriter = (data: ArrayBuffer): Promise<Status> => {
+      this._stats.bytesReceived += data.byteLength;
+      this._stats.framesReceived += 1;
+
       return new Promise(resolveStatusPromise => {
         if (!sourceBuffer.updating) {
           sourceBuffer.appendBuffer(new Uint8Array(data));
