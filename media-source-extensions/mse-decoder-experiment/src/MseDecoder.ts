@@ -22,7 +22,7 @@ export type PendingTrackWriterCreates = {
 
 export type MseDecoderOptionsType = {
   sourceBufferMode?: AppendMode;
-}
+};
 
 export default class MseDecoder {
   public status: ReadyState;
@@ -49,7 +49,7 @@ export default class MseDecoder {
         return this._createTrackBuffer(mimeCodecType, resolveTrackWriter);
       }
 
-      console.warn('[MseDecoder][createTrackWriter] readyState [%s]', this._mediaSource.readyState)
+      console.warn('[MseDecoder][createTrackWriter] readyState [%s]', this._mediaSource.readyState);
       this._pendingTrackWriterCreates.push({
         mimeCodecType,
         resolveTrackWriter
