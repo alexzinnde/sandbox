@@ -59,7 +59,7 @@ export default class MseDecoder {
       bytesReceived: 0,
       bytesDecoded: 0,
       framesReceived: 0,
-      framesDecoded: 0,
+      framesDecoded: 0
     };
 
     this._initialize();
