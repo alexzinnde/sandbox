@@ -1,4 +1,4 @@
-enum SupportedDRMProviders {
+export enum SupportedDRMProviders {
   ClearKey = 'org.w3.clearkey'
 }
 
@@ -56,17 +56,19 @@ export default class EncryptedMediaHandler {
             .then((serverCertificate: ArrayBuffer) => mediaKeys.setServerCertificate(serverCertificate))
             .catch(setServerCertificateError => console.error(`Error setting server certifcate [${setServerCertificateError}]`));
         }
-        const onMediaKeysMessage = ({messageType, message}: MediaKeyMessageEvent) => {
-          console.log('[EncryptedMediaHandler] MediaKeys Message Type [%s]', messageType)
-          // !?!?!?!?!
-          
-        }
+        const onMediaKeysMessage = async ({messageType, message}: MediaKeyMessageEvent) => {
+          console.log('[EncryptedMediaHandler] MediaKeys Message Type [%s]', messageType);
 
-        this._keySession = mediaKeys.createSession('temporary');
-        this._keySession?.addEventListener('message', onMediaKeysMessage.bind(this))
-        
+          if (!this._licenseServerUrl) {
+            return console.warn('Unable to fetch license, no license server url');
+          }
 
+          const license = await fetchLicense(this._licenseServerUrl, message);
+          this._keySession?.update(license);
+        };
 
+        this._keySession = mediaKeys.createSession(this._keySessionType);
+        this._keySession?.addEventListener('message', onMediaKeysMessage.bind(this));
         this._mediaKeys = mediaKeys;
       });
   }
@@ -81,16 +83,41 @@ export default class EncryptedMediaHandler {
   }
 
   private _setOnVideoEncryptedEventListener(mediaElement: HTMLMediaElement) {
-    mediaElement.addEventListener('encypted', this._onVideoEncrypted.bind(this) as EventListener);
+    const onVideoEncrypted = (mediaEvent: MediaEncryptedEventInit) => {
+      const {initDataType, initData} = mediaEvent;
+
+      if (!this._keySession) {
+        return console.warn('Video encrypted but no KeySession');
+      }
+
+      if (initData && initDataType) {
+        this._keySession.generateRequest(initDataType, initData);
+      }
+    };
+    mediaElement.addEventListener('encrypted', onVideoEncrypted);
+  }
+}
+
+async function fetchLicense(licenseServerUrl: string, message: ArrayBuffer): Promise<Uint8Array> {
+  const response = await fetch(licenseServerUrl, {
+    method: 'POST',
+    body: message,
+    headers: {'Content-Type': 'application/octet-stream'}
+  });
+  const responseJSON = await response.json();
+  const base64License = responseJSON.license;
+  const binaryLicense = base64ToBinary(base64License);
+
+  return binaryLicense;
+}
+
+function base64ToBinary(bases64EncodedString: string): Uint8Array {
+  const decodedString = atob(bases64EncodedString);
+  const binaryData = new Uint8Array(decodedString.length);
+
+  for (let i = 0; i < decodedString.length; ++i) {
+    binaryData[i] = decodedString.charCodeAt(i);
   }
 
-  private _onVideoEncrypted(mediaEvent: MediaEncryptedEvent) {
-    const {initDataType, initData} = mediaEvent;
-
-    if (!this._keySession) {
-      return console.warn('No KeySession');
-    }
-
-    this._keySession.generateRequest(initDataType, initData ?? new ArrayBuffer(0));
-  }
+  return binaryData;
 }
