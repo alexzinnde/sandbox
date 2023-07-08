@@ -18,25 +18,22 @@ export default function generateUI() {
   stopBtn.innerText = 'Stop';
 
   const logStatsBtn = document.createElement('button');
-  logStatsBtn.innerText = 'Toggle Stats Log'
+  logStatsBtn.innerText = 'Toggle Stats Log';
 
   const statsTextArea = document.createElement('textarea');
-  statsTextArea.style.width = "100%";
-  statsTextArea.style.height = "90%";
-  statsTextArea.style.display = 'block'
+  statsTextArea.style.width = '100%';
+  statsTextArea.style.height = '90%';
+  statsTextArea.style.display = 'block';
   statsTextArea.style.margin = '10px auto';
   statsTextArea.style.resize = 'none';
-  
 
-  statsTextArea.style.whiteSpace = 'nowrap;'
+  statsTextArea.style.whiteSpace = 'nowrap;';
 
   statsTextArea.readOnly = true;
 
-  statsTextArea.style.backgroundColor = '#33333'
+  statsTextArea.style.backgroundColor = '#33333';
   statsTextArea.cols = 200;
   statsTextArea.rows = 20;
-
-
 
   root.appendChild(videoElement);
   root.appendChild(br);
@@ -44,7 +41,6 @@ export default function generateUI() {
   root.appendChild(stopBtn);
   root.appendChild(logStatsBtn);
   root.appendChild(statsTextArea);
-
 
   return {
     root,
