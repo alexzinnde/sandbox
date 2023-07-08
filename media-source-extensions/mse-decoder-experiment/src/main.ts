@@ -1,57 +1,48 @@
-import "./style.css";
-import SegmentLoader from "./SegmentLoader";
-import MseDecoder from "./MseDecoder";
+import './style.css'
 
-const videoElement = document.querySelector<HTMLVideoElement>("#video-1");
+import generateUI from './generateUI'
+import MseDecoder from './MseDecoder'
+import {fetchSegmentAt} from './SegmentLoader'
 
-if (!videoElement) {
-  throw new Error("No video Element");
+const {videoElement, startBtn, stopBtn}  = generateUI()
+const videoData = await fetchSegmentAt('/video-1/hawtin-video.mp4')
+const audioData = await fetchSegmentAt('/video-1/hawtin-audio.mp4')
+
+const mseDecoder = new MseDecoder(videoElement)
+const audioMimeCodecType = 'audio/mp4; codecs="mp4a.40.2"';
+const audioTrackWriter = await mseDecoder.createTrackWriter(audioMimeCodecType);
+const videoMimeCodecType = 'video/mp4; codecs="avc1.4d401f"';
+const videoTrackWriter = await mseDecoder.createTrackWriter(videoMimeCodecType);
+
+let audioInterval: number;
+let videoInterval: number;
+
+
+startBtn.onclick = async () => {
+
+  console.log('audioData [%o]', audioData)
+  console.log('audioWriter [%o]', audioTrackWriter)
+  audioInterval = startAudioInterval()
+  videoInterval = startVideoInterval()
+  videoElement.play();
 }
 
-// const audioSegmentLoader = new SegmentLoader();
-const videoSegmentLoader = new SegmentLoader();
-// const audioSegments = await audioSegmentLoader.getSegmentsAt('/sample/hawtin-audio.m4a');
-const videoSegments = await videoSegmentLoader.getSegmentsAt('/sample/hawtin-video.mp4');
-const mseDecoder = new MseDecoder(videoElement);
-// const audioTrackWriter = await mseDecoder.createTrackWriter('audio/mp4; codecs="mp4a.40.2"');
-const videoTrackWriter = await mseDecoder.createTrackWriter('video/mp4; codecs="avc1.4d401f"');
+function startAudioInterval() {
+  return setInterval(async() => {
+    const audioSegment = audioData.shift();
+    if (audioSegment) {
+      const status = await audioTrackWriter(new Uint8Array(audioSegment));
+      console.log('[audio] write status [%s]', status)
+    }
+  }, 400)
+}
 
-// console.log('[audioSegments] [%o]', audioSegments.length)
-console.log('[videoSegments] [%o]', videoSegments.length)
-
-let currentVideoSegmentId = 0;
-
-let videoInterval = setInterval(() => {
-  console.log('writing video segment [%s]', currentVideoSegmentId)
-  if (videoSegments[currentVideoSegmentId]) {
-   
-    videoTrackWriter(videoSegments[currentVideoSegmentId]).then((status) => {
-      console.log("Video segmentId [%s] status [%s] ", currentVideoSegmentId, status);
-    });
-    currentVideoSegmentId += 1;
-  } else {
-    console.log('[demo] currentVideoSegmentId [%s] videoSegments [%o] clearing interval', currentVideoSegmentId, videoSegments[currentVideoSegmentId])
-    clearInterval(videoInterval)
-  }
-}, 10);
-
-// audioTrackWriter(audioSegments[0]).then((status) => {
-//   console.log("Video segmentId [%s] status [%s] ", 0, status);
-// });
-
-// let currentAudioSegmentId = 1
-// let audioInterval = setInterval(() => {
-//   console.log('writing segment [%s]', currentAudioSegmentId)
-//   if (audioSegments[currentAudioSegmentId]) {
-   
-//     audioTrackWriter(audioSegments[currentAudioSegmentId]).then((status) => {
-//       console.log("Video segmentId [%s] status [%s] ", currentAudioSegmentId, status);
-//     });
-//     currentAudioSegmentId += 1;
-//   } else {
-//     console.log('[demo] currentAudioSegmentId [%s] videoSegments [%o] clearing interval', currentAudioSegmentId, videoSegments[currentAudioSegmentId])
-//     clearInterval(audioInterval)
-//   }
-// }, 60 * 1000);
-
-
+function startVideoInterval() {
+  return setInterval(async() => {
+    const videoSegment = videoData.shift();
+    if (videoSegment) {
+      const status = await videoTrackWriter(new Uint8Array(videoSegment));
+      console.log('[video] write status [%s]', status)
+    }
+  }, 400)
+}

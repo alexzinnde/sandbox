@@ -1,129 +1,136 @@
-type Status = "OK" | "ERROR";
-type SegmentWithPromise = {
+export type Status = 'OK' | 'ERROR';
+type dataWithPromise = {
   data: ArrayBuffer;
-  statusPromise: (status: Status) => void;
+  resolveStatusPromise: (status: Status) => void;
 };
 
-type TrackWriter = (data: ArrayBuffer) => Promise<Status>;
+export type TrackWriter = (data: ArrayBuffer) => Promise<Status>;
 
 type TrackBuffer = {
   mimeCodecType: string;
-  buffer: SegmentWithPromise[];
+  buffer: dataWithPromise[];
   sourceBuffer: SourceBuffer;
-  feeder?: (data: ArrayBuffer) => void;
-  trackWriterPromise?: (trackWriter: TrackWriter) => void;
+  resolveTrackWriter?: (trackWriter: TrackWriter) => void;
 };
 
-type TrackBuffers = Record<string, TrackBuffer>;
+export type TrackType = 'audio' | 'video';
+export type TrackBuffers = Record<TrackType, TrackBuffer>;
+export type PendingTrackWriterCreates = {
+  mimeCodecType: string;
+  resolveTrackWriter: (trackWriter: TrackWriter) => void;
+}[];
 
-export class MseDecoder {
-  public readyState: ReadyState;
+export default class MseDecoder {
+  public status: ReadyState;
   private _videoElement: HTMLVideoElement;
   private _mediaSource: MediaSource;
   private _trackBuffers: TrackBuffers;
+  private _pendingTrackWriterCreates: PendingTrackWriterCreates;
 
-  constructor(videoElement: HTMLVideoElement) {
-    this.readyState = "closed";
+  private _options?: Record<string, string>;
+
+  constructor(videoElement: HTMLVideoElement, options?: {}) {
+    this.status = 'closed';
     this._videoElement = videoElement;
-    this._trackBuffers = {};
+    this._trackBuffers = {} as TrackBuffers;
     this._mediaSource = new MediaSource();
+    this._pendingTrackWriterCreates = [];
+    this._options = options;
 
     this._initialize();
   }
 
-  public createTrackWriter(mimeCodecType: string): Promise<TrackWriter> {
-    return new Promise((resolve) => {
-      const trackBuffer: TrackBuffer = {
-        mimeCodecType,
-        buffer: [],
-        trackWriterPromise: resolve
-      };
-
-      if (this._mediaSource.readyState === "open") {
-        console.log('[createTrackWriter] MediaSource was open when invoked')
-        this._addSourceBuffer(trackBuffer);
-
-        return
+  public async createTrackWriter(mimeCodecType: string): Promise<TrackWriter> {
+    return new Promise(resolveTrackWriter => {
+      if (this._mediaSource.readyState === 'open') {
+        return this._createTrackBuffer(mimeCodecType, resolveTrackWriter);
       }
 
-      this._trackBuffers[mimeCodecType] = trackBuffer;
-      return;
+      console.warn('[MseDecoder][createTrackWriter] readyState [%s]', this._mediaSource.readyState)
+      this._pendingTrackWriterCreates.push({
+        mimeCodecType,
+        resolveTrackWriter
+      });
     });
   }
 
   private _initialize() {
-    const onSourceEnded = () => {
-      console.log("[MediaSource] [sourceended]");
-      this.readyState = this._mediaSource.readyState;
+    console.log('[MseDecoder] [initialize] START');
+    this._mediaSource.onsourceended = () => {
+      console.warn('[MseDecoder] [MediaSource] ended');
+      this.status = 'ended';
     };
-    const onSourceClose = () => {
-      console.log("[MediaSource] [sourceclose]");
-      this.readyState = this._mediaSource.readyState;
+    this._mediaSource.onsourceclose = () => {
+      console.log('[MseDecoder] [MediaSource] close');
+      this.status = 'closed';
     };
-    const onSourceOpen = () => {
-      console.log("[MediaSource] [sourceopen]");
-      this.readyState = this._mediaSource.readyState;
+    this._mediaSource.onsourceopen = () => {
+      console.log('[MseDecoder] [MediaSource] open');
+      this.status = 'open';
       URL.revokeObjectURL(this._videoElement.src);
-      Object.values(this._trackBuffers)
-        .filter((trackBuffer) => trackBuffer.trackWriterPromise !== undefined)
-        .forEach((trackBuffer) => this._addSourceBuffer(trackBuffer));
+
+      const upperLimit = 2;
+      let iteration = 0;
+
+      while (this._pendingTrackWriterCreates.length && iteration < upperLimit) {
+        const pendingTrackWriter = this._pendingTrackWriterCreates.shift();
+        console.log('[MseDecoder] [MediaSource] pendingTrackWriterCreate [%s]', pendingTrackWriter?.mimeCodecType);
+        if (pendingTrackWriter) {
+          this._createTrackBuffer(pendingTrackWriter.mimeCodecType, pendingTrackWriter?.resolveTrackWriter);
+        }
+        iteration += 1;
+      }
     };
-
-    this._mediaSource.onsourceended = onSourceEnded;
-    this._mediaSource.onsourceclose = onSourceClose;
-    this._mediaSource.onsourceopen = onSourceOpen;
-
     this._videoElement.src = URL.createObjectURL(this._mediaSource);
-    console.log("[MseDecoder] initialize complete [%s]", this._videoElement.src);
+    console.log('[MseDecoder] [initialize] END');
   }
 
-  private _addSourceBuffer(trackBuffer: TrackBuffer) {
-    console.log('[addSourceBuffer] trackBuffer [%o]', trackBuffer)
-    const { mimeCodecType, buffer, trackWriterPromise } = trackBuffer;
-    const feedSourceBuffer = function (
-      buffer: SegmentWithPromise[],
-      sourceBuffer: SourceBuffer
-    ) {
-      console.log("[feedSourceBuffer] trackBuffer [%o]", trackBuffer);
-      if (!sourceBuffer.updating) {
-        const {data} = buffer[0];
-        if (data) {
-          sourceBuffer.appendBuffer(new Uint8Array(data))
-        }
+  private _createTrackBuffer(mimeCodecType: string, resolveTrackWriter?: (trackWriter: TrackWriter) => void) {
+    console.log('[MseDecoder] [MediaSource] creating TrackBuffer for [%s]', mimeCodecType);
+    const trackType = mimeCodecType.split('/').shift();
+    if (!isOfTrackType(trackType)) {
+      throw new Error(`TrackType unknown [${trackType}]`);
+    }
+
+    const sourceBuffer = this._mediaSource.addSourceBuffer(mimeCodecType);
+    this._trackBuffers[trackType] = {
+      mimeCodecType,
+      buffer: [],
+      sourceBuffer
+    };
+
+    sourceBuffer.onerror = () => {
+      console.warn('[MseDecoder] [SourceBuffer] [%s] error', trackType);
+    };
+    sourceBuffer.onupdate = () => {
+      this._options?.debug && console.log('[MseDecoder] [SourceBuffer] [%s] update', trackType);
+      this._trackBuffers[trackType].buffer[0].resolveStatusPromise('OK');
+      this._trackBuffers[trackType].buffer.shift();
+
+      if (this._trackBuffers[trackType].buffer.length) {
+        sourceBuffer.appendBuffer(new Uint8Array(this._trackBuffers[trackType].buffer[0].data));
       }
     };
 
-    const trackWriter = function (buffer: SegmentWithPromise[], sourceBuffer: SourceBuffer, data: ArrayBuffer): Promise<Status> {
-      
-      return new Promise((statusPromise) => {
-        buffer.push({
-          data,
-          statusPromise,
-        });
+    const trackWriter = (data: ArrayBuffer): Promise<Status> => {
+      return new Promise(resolveStatusPromise => {
+        if (!sourceBuffer.updating) {
+          sourceBuffer.appendBuffer(new Uint8Array(data));
+        }
 
-        feedSourceBuffer.call(null, buffer, sourceBuffer);
+        this._trackBuffers[trackType].buffer.push({
+          data,
+          resolveStatusPromise
+        });
       });
     };
-    const sourceBuffer = this._mediaSource.addSourceBuffer(mimeCodecType);
-    // sourceBuffer.mode = 'sequence';
 
-    sourceBuffer.onupdate = () => {
-      console.log('[sourceBuffer] update');
-      const {data, statusPromise} = buffer.shift();
-
-      if (statusPromise) {   
-        statusPromise('OK')
-      }
-    }
-    trackBuffer.feeder = feedSourceBuffer.bind(this, buffer, sourceBuffer);
-
-    this._trackBuffers[mimeCodecType] = trackBuffer;
-
-    console.log('[SourceBuffer] update trackBuffer [%o]', trackBuffer)
-    if (trackWriterPromise) {
-      trackWriterPromise(trackWriter.bind(null, buffer, sourceBuffer));
+    if (resolveTrackWriter) {
+      resolveTrackWriter(trackWriter);
     }
   }
 }
 
-export default MseDecoder;
+function isOfTrackType(item: unknown): item is TrackType {
+  return (typeof item === 'string' && item === 'audio') || item === 'video';
+}

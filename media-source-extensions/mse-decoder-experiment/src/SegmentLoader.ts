@@ -1,23 +1,25 @@
-export default class SegmentLoader {
-  async getSegmentsAt(url: string) {
-    const res = await fetch(url, { method: "GET" });
-    const reader = res.body?.getReader();
 
-    return reader?.read().then(onRead.bind(null, reader));
-  }
-}
 
-const data: Uint8Array[] = []
+export async function fetchSegmentAt(url: string) {
+  const data: Uint8Array[] = []
+  const res = await fetch(url, { method: "GET" });
+  const reader = res.body?.getReader();
 
-function onRead(reader: ReadableStreamDefaultReader<Uint8Array> , {done, value}: {done: boolean, value: Uint8Array}) {
-  if (done) {
-    console.log('done [%s] data.length [%o]', data.length)
-
-    return data.slice();
-  }
-
-  data.push(value);
-
-  return reader.read().then(onRead.bind(null, reader))
+  function onRead(reader: ReadableStreamBYOBReader, {done, value}) {
+    if (done) {
+      console.log('done [%s] data.length [%o]', data.length)
   
+      return data.slice();
+    }
+  
+    data.push(value);
+  
+    return reader.read().then(onRead.bind(null, reader))
+    
+  }
+
+  return reader?.read().then(onRead.bind(null, reader));
 }
+
+
+
