@@ -1,4 +1,4 @@
-import configureForClearKey from '../mediaKeys/configureMediaKeys';
+import configureForClearKey, { SupportedKeySystem } from '../mediaKeys/configureMediaKeys';
 import MseDecoderConfigType, {MseDecoderOptionsType} from './MseDecoderConfigType';
 
 type TrackKind = 'audio' | 'video';
@@ -35,7 +35,7 @@ export default class MseDecoder {
   private _trackBuffers: TrackBuffers;
   private _stats: MseDecoderStatisticsType;
 
-  constructor({mediaElement, options = {}, drm}: MseDecoderConfigType) {
+  constructor({mediaElement, options = {}}: MseDecoderConfigType) {
     this.status = 'closed';
     this.trackWriters = {} as TrackWriters;
     this._mediaElement = mediaElement;
@@ -51,10 +51,6 @@ export default class MseDecoder {
       framesReceived: 0,
       framesDecoded: 0
     };
-
-    if (drm) {
-      configureForClearKey(mediaElement, drm);
-    }
 
     this._initialize();
   }

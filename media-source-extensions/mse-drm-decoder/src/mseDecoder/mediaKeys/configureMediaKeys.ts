@@ -1,47 +1,78 @@
-export enum SupportedKeySystem {
-  Clearkey = 'org.w3.clearkey',
-  Widevine = 'com.widevine.alpha'
+export type MediaKeysConfigType = {
+  keySystem: string;
+  serverCertificateUrl: string;
+  licenseServerUrl: string;
+  mediaKeySystemConfiguration: MediaKeySystemConfiguration;
+};
+
+export default async function configureMediaKeysFor(mediaElement: HTMLMediaElement, config: MediaKeysConfigType) {
+  const {keySystem, serverCertificateUrl, licenseServerUrl, mediaKeySystemConfiguration} = config;
+
+  try {
+    const mediaKeysSystemAccess = await navigator.requestMediaKeySystemAccess(keySystem, [mediaKeySystemConfiguration]);
+    if (!mediaKeysSystemAccess) {
+      throw new Error('No MediaKeySystem Access');
+    }
+
+    const mediaKeys = await mediaKeysSystemAccess.createMediaKeys();
+    console.log('[configureMediaKeysFor] fetching serverCertificate');
+
+    const serverCertififate = await fetchServerCertificate(serverCertificateUrl);
+    console.log('[configureMediaKeysFor] setting serverCertificate on MediaKeys');
+    await mediaKeys.setServerCertificate(serverCertififate);
+    console.log('[configureMediaKeysFor] setting MediaKeys on element');
+    mediaElement.setMediaKeys(mediaKeys);
+    
+    const onMediaEncrypted = async (event: MediaEncryptedEventInit) => {
+      const {initDataType, initData} = event;
+      console.log('[onMediaEncryptedEvent] event [%o]', event);
+      const keySession = mediaKeys.createSession('temporary');
+
+      const onKeySessionMessage = async (event: MediaKeyMessageEvent) => {
+        console.log('[onKeySessionMessage] event [%o]', event);
+        const license = await fetchLicense(licenseServerUrl, event.message);
+  
+        (event.target as MediaKeySession).update(license);
+      };
+
+      keySession.addEventListener('message', onKeySessionMessage);
+      
+      await keySession.generateRequest(initDataType, initData);
+      mediaElement.currentTime = mediaElement.currentTime + 2
+
+    };
+
+    mediaElement.addEventListener('encrypted', onMediaEncrypted);
+  } catch (error) {
+    console.warn('Unable to configure Media Keys [%o]', error);
+  }
 }
 
-export type MediaKeyConfigurationType = {
-  selectedSystem: SupportedKeySystem;
-  serverCertificateUrl?: string;
-  licenseServerUrl?: string;
-  systemConfiguration: MediaKeySystemConfiguration;
-  clearkeyKeyIds?: Record<string, string>;
-};
-export default function configureMediaKeysFor(mediaElement: HTMLMediaElement, {selectedSystem, systemConfiguration, clearkeyKeyIds}: MediaKeyConfigurationType) {
-  if (!mediaElement.mediaKeys) {
-    console.log('[step 1] request MediaKeys System Access');
-    navigator
-      .requestMediaKeySystemAccess(selectedSystem, [systemConfiguration])
-      .then(mediaKeySystemAccess => {
-        console.log('[step 2] create media keys with mediaKeysSystemAccess');
-        return mediaKeySystemAccess.createMediaKeys();
-      })
-      .then(mediaKeys => {
-        console.log('[step 3] set mediaKeys on media Element');
-        return mediaElement.setMediaKeys(mediaKeys);
-      })
-      .then(() => {
-        console.log('[step 4] use mediaKeys to create session');
-        const te = new TextEncoder();
-        const initData = te.encode(`{"kids":["${Object.keys(clearkeyKeyIds ?? {})[0]}"]}`);
-        const keySession = mediaElement.mediaKeys?.createSession('temporary');
-        console.log('[step 5] use keySession to "generateRequest"');
-        keySession?.generateRequest('keyids', initData);
+async function fetchServerCertificate(serverCertificateUrl: string) {
+  const response = await fetch(serverCertificateUrl, {method: 'GET'});
 
-        const onKeySessionMessage = ({messageType, message}: MediaKeySessionEventMap['message']) => {
-          console.log('[step 7] onKeySessionMessage -> fetch license with payload');
-          console.log('[onKeySessionMessage] messageType [%o] message [%o]', messageType, message);
-          const keyIds = Object.entries(clearkeyKeyIds ?? {});
-          
-          const license = te.encode(`{"keys":[{"kty":"oct","k":"${keyIds[0][1]}","kid":"${keyIds[0][0]}"}],"type":"temporary"}`);
-          keySession?.update(license).catch(console.error.bind(console, 'update() failed'));
-        };
+  return await response.arrayBuffer();
+}
 
-        console.log('[step 6] set "message" event listener on KeySession');
-        keySession?.addEventListener('message', onKeySessionMessage);
-      });
+async function fetchLicense(licenseServerUrl: string, message: ArrayBuffer): Promise<Uint8Array> {
+  const response = await fetch(licenseServerUrl, {
+    method: 'POST',
+    body: message,
+    headers: {'Content-Type': 'application/octet-stream'}
+  });
+  const responseJSON = await response.json();
+  const base64License = responseJSON.license;
+
+  return base64ToBinary(base64License);
+}
+
+function base64ToBinary(bases64EncodedString: string): Uint8Array {
+  const decodedString = atob(bases64EncodedString);
+  const binaryData = new Uint8Array(decodedString.length);
+
+  for (let i = 0; i < decodedString.length; ++i) {
+    binaryData[i] = decodedString.charCodeAt(i);
   }
+
+  return binaryData;
 }

@@ -1,4 +1,3 @@
-import { MediaKeyConfigurationType } from "../mediaKeys/configureMediaKeys";
 
 export type MseDecoderOptionsType = {
   sourceBufferMode?: AppendMode;
@@ -8,7 +7,6 @@ export type MseDecoderOptionsType = {
 type MseDecoderConfigType = {
   mediaElement: HTMLMediaElement
   options?: MseDecoderOptionsType
-  drm?: MediaKeyConfigurationType;
 }
 
 export default MseDecoderConfigType;
