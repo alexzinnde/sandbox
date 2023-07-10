@@ -71,8 +71,14 @@ const demoSelectContainer = document.createElement('div');
 const demoSourceSelectLabel = document.createElement('label');
 demoSourceSelectLabel.innerText = 'Select Source: ';
 demoSourceSelectLabel.htmlFor = 'demo-source';
+
 const demoSourceSelect = document.createElement('select');
 demoSourceSelect.id = 'demo-source';
+const defaultOption = document.createElement('option');
+defaultOption.innerText = 'MseDecoder Demos';
+defaultOption.disabled = true;
+defaultOption.defaultSelected = true;
+demoSourceSelect.appendChild(defaultOption);
 Object.keys(demoSources).forEach(demoSource => {
   const option = document.createElement('option');
   option.innerText = demoSource;
@@ -102,11 +108,11 @@ const platfromDRMContainer = document.createElement('div');
 const applicationIdInput = document.createElement('input');
 applicationIdInput.type = 'text';
 applicationIdInput.placeholder = 'Application Id';
-applicationIdInput.value = 'phenixrts.com-alex.zinn';
+applicationIdInput.value = '';
 const streamIdInput = document.createElement('input');
 streamIdInput.type = 'text';
 streamIdInput.placeholder = 'Stream Id';
-streamIdInput.value = 'us-central#us-chicago-1-ad-3.vchnRNHg.20230710.PSrhRyDg';
+streamIdInput.value = '';
 
 const drmTokenInput = document.createElement('input');
 drmTokenInput.type = 'text';
@@ -124,9 +130,7 @@ demoSourceSelect.onchange = () => {
     demoSelectContainer.appendChild(platfromDRMContainer);
   }
 
-  if (selectedDemoName !== 'platform-widevine' && demoSelectContainer.contains(platfromDRMContainer)) {
-    demoSelectContainer.removeChild(platfromDRMContainer);
-  }
+  demoSourceSelect.disabled = true;
 };
 
 let feederInterval: number;
@@ -152,29 +156,31 @@ toggleFeeder.onclick = async () => {
     selectedDemo.path = selectedDemo.path.replace('%streamId$', encodeURIComponent(streamId)); // `https://pcast-stg.phenixrts.com/video/%applicationId$/%streamId$/widevine/certificate`,
   }
 
-  mseDecoder = new MseDecoder({
-    mediaElement: videoElement,
-    options: {
-      sourceBufferMode: 'segments'
-    }
-  });
-
-  mseDecoder.addTrack('video/mp4; codecs="avc1.42E01E"');
-
-  if (selectedDemo.drm?.keySystem === 'com.widevine.alpha') {
-    await configureMediaKeysFor(videoElement, selectedDemo.drm);
-  }
-
-  if (selectedDemo.drm?.keySystem === 'org.w3.clearkey') {
-    configureMediaKeysClearKey(videoElement, 'org.w3.clearkey', selectedDemo.drm.systemConfiguration);
-  }
-
   if (feederInterval) {
     clearInterval(feederInterval);
     feederInterval = 0;
     toggleFeeder.innerText = 'Start';
   } else {
-    selectedDemoName === 'platform-widevine' ? (dataId = 1) : (dataId = 0);
+    if (!mseDecoder) {
+      mseDecoder = new MseDecoder({
+        mediaElement: videoElement,
+        options: {
+          sourceBufferMode: 'sequence'
+        }
+      });
+
+      mseDecoder.addTrack('video/mp4; codecs="avc1.42E01E"');
+    }
+
+    if (selectedDemo.drm?.keySystem === 'com.widevine.alpha') {
+      await configureMediaKeysFor(videoElement, selectedDemo.drm);
+    }
+
+    if (selectedDemo.drm?.keySystem === 'org.w3.clearkey') {
+      configureMediaKeysClearKey(videoElement, 'org.w3.clearkey', selectedDemo.drm.systemConfiguration);
+    }
+
+    selectedDemoName === 'platform-widevine' || selectedDemoName === 'isobmff-clearkey' ? (dataId = 1) : (dataId = 0);
     if (selectedDemo.initData) {
       const initData = await fetchSegmentAt(selectedDemo.initData);
       const statusInit = await mseDecoder.trackWriters['video'](initData);
