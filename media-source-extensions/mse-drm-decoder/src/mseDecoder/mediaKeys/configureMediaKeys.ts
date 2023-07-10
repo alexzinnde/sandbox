@@ -19,9 +19,11 @@ export default async function configureMediaKeysFor(mediaElement: HTMLMediaEleme
 
     const serverCertififate = await fetchServerCertificate(serverCertificateUrl);
     console.log('[configureMediaKeysFor] setting serverCertificate on MediaKeys');
+
     await mediaKeys.setServerCertificate(serverCertififate);
     console.log('[configureMediaKeysFor] setting MediaKeys on element');
-    mediaElement.setMediaKeys(mediaKeys);
+
+    await mediaElement.setMediaKeys(mediaKeys);
     
     const onMediaEncrypted = async (event: MediaEncryptedEventInit) => {
       const {initDataType, initData} = event;
@@ -38,8 +40,7 @@ export default async function configureMediaKeysFor(mediaElement: HTMLMediaEleme
       keySession.addEventListener('message', onKeySessionMessage);
       
       await keySession.generateRequest(initDataType, initData);
-      mediaElement.currentTime = mediaElement.currentTime + 2
-
+      mediaElement.currentTime = mediaElement.currentTime + 2 // get past init Segment
     };
 
     mediaElement.addEventListener('encrypted', onMediaEncrypted);

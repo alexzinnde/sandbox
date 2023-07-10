@@ -63,6 +63,9 @@ videoContainer.appendChild(videoElement);
 videoElement.onwaitingforkey = (...args) => {
   console.log('[video] Waiting For Keys [%o]', ...args);
 };
+videoElement.addEventListener('encrypted', (...args) => {
+  console.log('[video] Encrypted event [%o]', ...args);
+});
 
 const demoSelectContainer = document.createElement('div');
 const demoSourceSelectLabel = document.createElement('label');
@@ -93,7 +96,7 @@ feedInvalidBtn.onclick = () => {
   mseDecoder.trackWriters['video'](invalidData);
 };
 buttonsContainer.appendChild(toggleFeeder);
-buttonsContainer.appendChild(feedInvalidBtn);
+// buttonsContainer.appendChild(feedInvalidBtn);
 
 const platfromDRMContainer = document.createElement('div');
 const applicationIdInput = document.createElement('input');
@@ -103,7 +106,7 @@ applicationIdInput.value = 'phenixrts.com-alex.zinn';
 const streamIdInput = document.createElement('input');
 streamIdInput.type = 'text';
 streamIdInput.placeholder = 'Stream Id';
-streamIdInput.value = 'us-central#us-chicago-1-ad-1.95NF3RLW.20230710.PSlQPrJe';
+streamIdInput.value = 'us-central#us-chicago-1-ad-3.vchnRNHg.20230710.PSrhRyDg';
 
 const drmTokenInput = document.createElement('input');
 drmTokenInput.type = 'text';
@@ -119,6 +122,10 @@ demoSourceSelect.onchange = () => {
   const selectedDemoName = demoSourceSelect.selectedOptions[0].label;
   if (selectedDemoName === 'platform-widevine') {
     demoSelectContainer.appendChild(platfromDRMContainer);
+  }
+
+  if (selectedDemoName !== 'platform-widevine' && demoSelectContainer.contains(platfromDRMContainer)) {
+    demoSelectContainer.removeChild(platfromDRMContainer);
   }
 };
 
