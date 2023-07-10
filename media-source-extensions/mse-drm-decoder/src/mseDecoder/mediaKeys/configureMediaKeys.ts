@@ -14,33 +14,37 @@ export default async function configureMediaKeysFor(mediaElement: HTMLMediaEleme
       throw new Error('No MediaKeySystem Access');
     }
 
+    console.log('[configureMediaKeysFor] creating MediaKeys instance');
     const mediaKeys = await mediaKeysSystemAccess.createMediaKeys();
-    console.log('[configureMediaKeysFor] fetching serverCertificate');
 
-    const serverCertififate = await fetchServerCertificate(serverCertificateUrl);
-    console.log('[configureMediaKeysFor] setting serverCertificate on MediaKeys');
-
-    await mediaKeys.setServerCertificate(serverCertififate);
     console.log('[configureMediaKeysFor] setting MediaKeys on element');
-
     await mediaElement.setMediaKeys(mediaKeys);
-    
-    const onMediaEncrypted = async (event: MediaEncryptedEventInit) => {
-      const {initDataType, initData} = event;
-      console.log('[onMediaEncryptedEvent] event [%o]', event);
-      const keySession = mediaKeys.createSession('temporary');
 
-      const onKeySessionMessage = async (event: MediaKeyMessageEvent) => {
+    if (serverCertificateUrl) {
+      console.log('[configureMediaKeysFor] fetching serverCertificate');
+      const serverCertififate = await fetchServerCertificate(serverCertificateUrl);
+
+      console.log('[configureMediaKeysFor] setting serverCertificate on MediaKeys');
+      await mediaKeys.setServerCertificate(serverCertififate);
+    }
+
+    const onMediaEncrypted = async (event: MediaEncryptedEventInit) => {
+      console.log('[onMediaEncryptedEvent] event [%o]', event);
+      const {initDataType, initData} = event;
+      const keySession = mediaKeys.createSession('temporary');
+      const onKeySessionMessage = async ({message, target: keySession}: MediaKeyMessageEvent) => {
         console.log('[onKeySessionMessage] event [%o]', event);
-        const license = await fetchLicense(licenseServerUrl, event.message);
-  
-        (event.target as MediaKeySession).update(license);
+        if (licenseServerUrl) {
+          console.log('[onKeySessionMessage] fetching license from [%s] with message [%o]', licenseServerUrl, message);
+          const license = await fetchLicense(licenseServerUrl, message);
+
+          (keySession as MediaKeySession).update(license);
+        }
       };
 
       keySession.addEventListener('message', onKeySessionMessage);
-      
       await keySession.generateRequest(initDataType, initData);
-      mediaElement.currentTime = mediaElement.currentTime + 2 // get past init Segment
+      mediaElement.currentTime = mediaElement.currentTime + 2; //TODO WHY? get past init Segment
     };
 
     mediaElement.addEventListener('encrypted', onMediaEncrypted);
