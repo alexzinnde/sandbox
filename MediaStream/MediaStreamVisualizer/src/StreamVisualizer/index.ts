@@ -7,8 +7,8 @@ const WIDTH = 308;
 const HEIGHT = 231;
 
 // Interesting parameters to tweak!
-const SMOOTHING = 0.8;
-const FFT_SIZE = 2048;
+const SMOOTHING = 0.9;
+const FFT_SIZE = 512;
 
 
 const defaultOptions = {

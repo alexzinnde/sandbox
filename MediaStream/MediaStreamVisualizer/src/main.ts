@@ -4,12 +4,14 @@ import './style.css'
 import generateUserInterface from './UserInterface';
 import { getUserMediaStream } from './MediaStream';
 import StreamVisualizer from './StreamVisualizer';
-import {TimelineDataSeries, TimelineGraphView} from './Graph/index.js';
 
-const { videoElement, canvasElement, startBtn } = generateUserInterface()
+
+const { TimelineDataSeries, TimelineGraphView, videoElement, canvasElement, startBtn, graphCanvas} = generateUserInterface()
 
 let userMediaStream: Maybe<MediaStream>;
 let streamVisualizer: StreamVisualizer;
+let timelineData
+let timelineGraph
 
 startBtn.onclick = async () => {
   console.log('[startBtn] [click] userMediaStream [%o]', userMediaStream)
@@ -36,6 +38,9 @@ async function main() {
 
   streamVisualizer = new StreamVisualizer(userMediaStream, canvasElement, { frequencyDomainVisualizer: true, timeDomainVisualizer: false })
   streamVisualizer.start();
+
+  timelineData = new TimelineDataSeries()
+  timelineGraph = new TimelineGraphView('graph-container', 'graph-canvas')
 }
 function stop() {
   canvasElement.remove()

@@ -694,7 +694,7 @@ const TimelineGraphView = function() {
   return TimelineGraphView;
 };
 
-export default {
+export {
   TimelineDataSeries,
   TimelineGraphView
 }

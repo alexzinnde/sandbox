@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "@techniker/observable": {
+      "signature": "70a5697faf645341d897b44d3515854c",
+      "file": true
+    }
+  }
+}
