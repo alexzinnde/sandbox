@@ -1,10 +1,7 @@
 import type { WebSocket } from "ws"
 import {WebSocketServer} from "ws"
 
-
-
 export default function startWebSocketServer({port}: {port: number}) {
-
   const wsServer = new WebSocketServer({port})
   console.log('[WebSocketServer] Active on port [%s]', port)
 
@@ -13,8 +10,8 @@ export default function startWebSocketServer({port}: {port: number}) {
   wsServer.on('connection', function (socket: WebSocket) {
     sockets.push(socket);
 
-    socket.on('message', function (msg: ArrayBufferLike) {
-      console.log('[WebSocketServer] received message [%o]', msg)
+    socket.on('message', function (msg: Buffer) {
+      console.log('[WebSocketServer] received message [%o]', msg.toString())
       sockets.forEach(s => s.send(msg));
     })
 
