@@ -1,15 +1,17 @@
 class WordCount extends HTMLParagraphElement {
   constructor() {
     super();
-    
+
     const wcParent = this.parentNode;
 
-    function countWords(node: Node) {
-      const text = node.innerText || node.textContent;
-      return text
-        .trim()
-        .split(/\s+/g)
-        .filter(a => a.trim().length > 0).length;
+    function countWords(node: Node | null) {
+      const text = node?.textContent;
+      return (
+        text
+          ?.trim()
+          .split(/\s+/g)
+          .filter(a => a.trim().length > 0).length ?? 0
+      );
     }
 
     const count = `Words: ${countWords(wcParent)}`;
