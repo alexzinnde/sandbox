@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MseDecoder Example</title>
+  </head>
+  <body>
+    <div class="flex-container">
+      <div class="main-container">
+        <div class="video-contianer">
+          <video id="video-1" autoplay muted controls="360px" height="240px" style="background-color: black" />
+        </div>
+        <div>
+          <div><h4>MseDecoder</h4></div>
+        </div>
+        <div>
+          <div>
+            <h4>Video TrackWriter</h4>
+            <div>State: <input id="video-track-writer-state" type="text" readonly /></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

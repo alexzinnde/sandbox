@@ -1,0 +1,15 @@
+.flex-container {
+  display: flex;
+  width: 99vw;
+  height: 99vh;
+}
+
+.main-container {
+  width: fit-content;
+  margin: auto;
+}
+
+.video-container {
+  width: 360px;
+  height: 360px;
+}
