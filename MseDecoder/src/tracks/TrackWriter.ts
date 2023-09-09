@@ -192,8 +192,11 @@ export default class TrackWriter {
   }
 
   private updateReceivedStatistics(receivedByteLength: number) {
-    this._statistics.value.bytesReceived += receivedByteLength
-    this._statistics.value.segmentsReceived += 1
+    this._statistics.value = {
+      ...this._statistics.value,
+      bytesReceived: this._statistics.value.bytesReceived + receivedByteLength,
+      segmentsReceived: this._statistics.value.segmentsReceived + 1
+    }
   }
 
   private updateWrittenStatistics() {

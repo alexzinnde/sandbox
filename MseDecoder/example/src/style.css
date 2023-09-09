@@ -10,6 +10,17 @@
 }
 
 .video-container {
-  width: 360px;
+  width: 600px;
   height: 360px;
+  margin: auto;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.stats-column {
+  width: 300px;
 }

@@ -9,15 +9,34 @@
     <div class="flex-container">
       <div class="main-container">
         <div class="video-contianer">
-          <video id="video-1" autoplay muted controls="360px" height="240px" style="background-color: black" />
+          <video id="video-1" autoplay muted controls width="100%" height="50%" style="background-color: black" />
         </div>
-        <div>
-          <div><h4>MseDecoder</h4></div>
+        <div class="flex-row">
+          <button id="reset-mse-decoder">Reset MseDecoder</button>
         </div>
-        <div>
-          <div>
+
+        <div class="flex-row">
+          <div class="stats-column">
+            <h4>MseDecoder</h4>
+            <div>Status: <input id="mse-decoder-status" type="text" readonly /></div>
+          </div>
+
+          <div class="stats-column">
             <h4>Video TrackWriter</h4>
-            <div>State: <input id="video-track-writer-state" type="text" readonly /></div>
+            <div>State: <input id="video-trackwriter-state" type="text" readonly /></div>
+            <div>Buffered Length: <input id="video-trackwriter-buffered-length" type="text" readonly /></div>
+            <div>Buffered Start: <input id="video-trackwriter-buffered-start" type="text" readonly /></div>
+            <div>Buffered End: <input id="video-trackwriter-buffered-end" type="text" readonly /></div>
+            <div>Buffered Time: <input id="video-trackwriter-buffered-time" type="text" readonly /></div>
+          </div>
+
+          <div class="stats-column">
+            <h4>Audio TrackWriter</h4>
+            <div>State: <input id="audio-trackwriter-state" type="text" readonly /></div>
+            <div>Buffered Length: <input id="audio-trackwriter-buffered-length" type="text" readonly /></div>
+            <div>Buffered Start: <input id="audio-trackwriter-buffered-start" type="text" readonly /></div>
+            <div>Buffered End: <input id="audio-trackwriter-buffered-end" type="text" readonly /></div>
+            <div>Buffered Time: <input id="audio-trackwriter-buffered-time" type="text" readonly /></div>
           </div>
         </div>
       </div>

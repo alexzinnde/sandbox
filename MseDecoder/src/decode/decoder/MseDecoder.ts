@@ -1,4 +1,6 @@
 import {Subject, ReadOnlySubject} from '../../rx'
+import Disposable from '../../disposable/Disposable'
+import DisposableList from '../../disposable/DisposableList'
 import TrackWriter from '../../tracks/TrackWriter'
 import MseDecoderStatisticsType from './MseDecoderStatisticsType'
 
@@ -8,11 +10,13 @@ export default class MseDecoder {
   private readonly _mediaElement: HTMLMediaElement
   private readonly _mediaSource: MediaSource
   private readonly _status: Subject<MseDecoderStatus>
-
   private readonly _statistics: Subject<MseDecoderStatisticsType>
+  private _resolveResetPromise: undefined | (() => void)
 
   private readonly _readOnlyStatus: ReadOnlySubject<MseDecoderStatus>
   private readonly _readOnlyStatistics: ReadOnlySubject<MseDecoderStatisticsType>
+
+  private readonly _disposables: DisposableList
 
   constructor(mediaElement: HTMLMediaElement) {
     this._mediaElement = mediaElement
@@ -27,9 +31,9 @@ export default class MseDecoder {
       },
       perTrack: {}
     })
-
     this._readOnlyStatus = new ReadOnlySubject(this._status)
     this._readOnlyStatistics = new ReadOnlySubject(this._statistics)
+    this._disposables = new DisposableList()
 
     this.initialize()
   }
@@ -48,20 +52,39 @@ export default class MseDecoder {
         return reject(`TrackWriter with mimeType [${mimeType}] already exists`)
       }
 
-      const createTrackWriter = () => {
+      const createTrackWriterAndSubscribeTrackWriter = () => {
         const sourceBuffer = this._mediaSource.addSourceBuffer(mimeType)
         const trackWriter = new TrackWriter(sourceBuffer)
 
-        console.log('[MseDecoder] createTrackWriter for mimeType [%s] [%o]', mimeType, trackWriter)
+        trackWriter.statistics.subscribe(trackWriterStatistics => {
+          this._statistics.value.perTrack[mimeType] = trackWriterStatistics
+        })
 
         resolve(trackWriter)
       }
 
-      this._status.subscribe(status => {
+      const disposeOfStatusSubscription = this._status.subscribe(status => {
         if (status === 'decoding') {
-          createTrackWriter()
+          createTrackWriterAndSubscribeTrackWriter()
+          disposeOfStatusSubscription()
         }
       })
+    })
+  }
+
+  public reset(): Promise<void> {
+    return new Promise(resolve => {
+      this._resolveResetPromise = resolve
+      this._statistics.value = {
+        allTracks: {
+          bytesReceived: 0,
+          bytesWritten: 0,
+          segmentsReceived: 0,
+          segmentsWritten: 0
+        },
+        perTrack: {}
+      }
+      this._mediaElement.load()
     })
   }
 
@@ -73,6 +96,10 @@ export default class MseDecoder {
       this.setStatus('initialzing')
     }
     this._mediaSource.onsourceopen = () => {
+      if (this._resolveResetPromise) {
+        this._resolveResetPromise()
+        this._resolveResetPromise = undefined
+      }
       URL.revokeObjectURL(this._mediaElement.src)
       this.setStatus('decoding')
     }

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FaceBook App</title>
+  </head>
+  <body>
+    <div id="app">
+      <button id="share-btn">Share</button>
+    </div>
+    <script>
+      window.fbAsyncInit = function () {
+        FB.init({
+          appId: '7001147969930164',
+          autoLogAppEvents: true,
+          xfbml: true,
+          version: 'v17.0'
+        });
+      };
+      const shareBtn = document.getElementById('share-btn');
+      shareBtn.onclick = () => {
+        FB.ui(
+          {
+            method: 'share',
+            href: 'https://developers.facebook.com/docs/'
+          },
+          // callback
+          function (response) {
+            if (response && !response.error_message) {
+              alert('Posting completed.');
+            } else {
+              alert('Error while posting.');
+            }
+          }
+        );
+      };
+    </script>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js"></script>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
