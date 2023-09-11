@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vanilla WebRTC</title>
+  </head>
+  <body>
+    <div id="app">
+      <div class="row">
+        <div class="participant-container">
+          <h3>Remote</h3>
+          <div class="video-container">
+            <video id="video" wdith="360" height="240" autoplay controls/>
+          </div>
+          <div>
+            <button id="subscribe-btn">Subscribe</button>
+          </div>
+          <div>
+            <div>WebSocket State: <input id="web-socket-state" readonly /></div>
+            <div>Ice Gathering State: <input id="ice-gathering-state" readonly /></div>
+            <div>Ice Connection State: <input id="ice-connection-state" readonly /></div>
+            <div>Connection State: <input id="connection-state" readonly /></div>
+            <div>Signaling State: <input id="signaling-state" readonly /></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

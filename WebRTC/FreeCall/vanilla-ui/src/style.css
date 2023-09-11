@@ -1,0 +1,26 @@
+#app {
+  width: 99vw;
+  height: 99vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  width: fit-content;
+  height: 400px;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+}
+
+.participant-container {
+  margin: 10px 40px;
+}
+
+h3 {
+  text-align: center;
+}
+
+video {
+  background-color: black;
+}
