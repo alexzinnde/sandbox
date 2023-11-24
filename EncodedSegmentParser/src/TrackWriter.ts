@@ -16,13 +16,14 @@ export default class TrackWriter {
   private readonly _readOnlyStatus: ReadOnlySubject<TrackWriterStatus> = new ReadOnlySubject(this._status)
   private readonly _readOnlyBufferedStart: ReadOnlySubject<number> = new ReadOnlySubject(this._bufferedStart)
   private readonly _readOnlyBufferedEnd: ReadOnlySubject<number> = new ReadOnlySubject(this._bufferedEnd)
-  private _isSourceBufferUpdating: boolean = false
+  private isSourceBufferUpdating: boolean = false
 
   constructor(mimeType: string, sourceBuffer: SourceBuffer) {
     this._sourceBuffer = sourceBuffer
     this._sourceBuffer.mode = 'segments'
     this._sourceBuffer.onerror = () => {
       console.warn('TrackWriter [%o] Error', mimeType)
+      debugger
     }
   }
 
@@ -39,7 +40,6 @@ export default class TrackWriter {
   }
 
   public write(segment: ArrayBuffer) {
-    console.log('[TrackWriter] write [%o]', segment.slice())
     const writePromise = new Promise<TrackWriterWriteStatus>(resolveWriteStatusPromise => {
       this._segmentsWithStatusPromise.push({
         segment,
@@ -53,11 +53,11 @@ export default class TrackWriter {
   }
 
   private async processQueue() {
-    if (this._isSourceBufferUpdating) {
+    if (this.isSourceBufferUpdating) {
       return
     }
 
-    this._isSourceBufferUpdating = true
+    this.isSourceBufferUpdating = true
 
     const writeSegmentToSourceBuffer = (segment: ArrayBuffer) => {
       return new Promise<TrackWriterWriteStatus>(resolveAppendStatusPromise => {
@@ -67,18 +67,20 @@ export default class TrackWriter {
           this._sourceBuffer.onupdateend = null
         }
 
-        this._sourceBuffer.appendBuffer(segment)
+        console.log('writing segment [%o]', segment)
+        this._sourceBuffer.appendBuffer(new Uint8Array(segment))
       })
     }
 
     while (this._segmentsWithStatusPromise.length) {
       const { segment, resolveWriteStatusPromise } = this._segmentsWithStatusPromise.shift()
       const appendStatus = await writeSegmentToSourceBuffer(segment)
+      // console.log('bufferd length [%o]', this._sourceBuffer.buffered.length)
 
       resolveWriteStatusPromise(appendStatus)
     }
 
-    this._isSourceBufferUpdating = false
+    this.isSourceBufferUpdating = false
   }
 
   private updateBufferedTimeRanges() {
@@ -86,6 +88,8 @@ export default class TrackWriter {
       const bufferedEndIndex = this._sourceBuffer.buffered.length - 1
       this._bufferedStart.value = this._sourceBuffer.buffered.start(bufferedEndIndex)
       this._bufferedEnd.value = this._sourceBuffer.buffered.end(bufferedEndIndex)
+    } else {
+      // console.warn('[TrackWriter] skipping updating buffered time ranges buffered length [%o]', this._sourceBuffer.buffered.length)
     }
   }
 }

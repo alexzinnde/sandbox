@@ -1,0 +1,14 @@
+{
+  "name": "one-time",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@zinntechniker/tools": "^2023.0.0"
+  }
+}

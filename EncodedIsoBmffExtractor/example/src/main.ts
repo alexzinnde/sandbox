@@ -1,11 +1,11 @@
 import { Channels } from '@phenixrts/sdk'
-import { MseDecoder } from '../../src/index'
+import { EmbeddedIsoBmffExtractor, MseDecoder } from '../../src/index'
 import IDisposable from '../../src/lang/disposable/IDisposable'
 import EncodedMediaPlaybackManager from './EncodedMediaPlaybackManager'
-import EncodedIsoBmffExtractor from '../../src/decode/extract/EncodedIsoBmffExtractor'
 
 const token =
   'DIGEST:eyJhcHBsaWNhdGlvbklkIjoicGhlbml4cnRzLmNvbS1hbGV4Lnppbm4iLCJkaWdlc3QiOiIrSHhkL3hQdTBLdTVRWnZLT1NQUjVHSFhvVzhUK3UrWE5FWjJ2VWtBZUorUXl3VjFjQzJJSjVGUHEyNVlkUkRWTSsvT1BCQWQ4UzZsMkRaeUhwMXdpdz09IiwidG9rZW4iOiJ7XCJleHBpcmVzXCI6MTcyOTk5NDY3MTY2OCxcInVyaVwiOlwiaHR0cHM6Ly9wY2FzdC1zdGcucGhlbml4cnRzLmNvbVwiLFwiY2FwYWJpbGl0aWVzXCI6W1wiZW5jb2RlZC1pbnNlcnRhYmxlLXN0cmVhbXNcIl0sXCJyZXF1aXJlZFRhZ1wiOlwiY2hhbm5lbElkOnVzLWNlbnRyYWwjcGhlbml4cnRzLmNvbS1hbGV4Lnppbm4jdGVzdENoYW5uZWwuZ2NGQU1FRHpvS2ZQXCJ9In0='
+const embeddingStrategy = 'embedded-iso-bmff:2023';
 const phenixInitializationSegmentUuidString = '511e22bd-34c0-4cee-b6c3-3c4d407622c7'
 const phenixMediaSegmentUuidString = '00000000-0000-0000-0000-000000000000'
 
@@ -23,15 +23,24 @@ let audioMediaSegmentSubcription: IDisposable | undefined = undefined
 let videoInitializationSegmentSubcription: IDisposable | undefined = undefined
 let videoMediaSegmentSubcription: IDisposable | undefined = undefined
 let videoWriteStatus = false
+let channel;
 
 async function main() {
   const playbackManager = new EncodedMediaPlaybackManager(videoElement)
   const mseDecoder = new MseDecoder(videoElement)
-  const extractor = new EncodedIsoBmffExtractor()
+  const extractor = new EmbeddedIsoBmffExtractor(embeddingStrategy)
+
+  mseDecoder.status.subscribe(mseDecoderStatus => {
+    switch(mseDecoderStatus) {
+      case 'error':
+        channel.dispose();
+
+        break;
+        
+    }
+  })
 
   videoInitializationSegmentSubcription = extractor.subscribeToPayload(phenixInitializationSegmentUuidString, async phenixInitializationSegment => {
-    console.log('phenixInitializationSegment [%o]', phenixInitializationSegment.slice())
-
     if (!videoMediaSegmentSubcription) {
       videoInitializationSegmentSubcription?.dispose()
       videoMediaSegmentSubcription = subscribeToMediaSegments()
@@ -41,8 +50,6 @@ async function main() {
 
   function subscribeToMediaSegments() {
     return extractor.subscribeToPayload(phenixMediaSegmentUuidString, async phenixMediaSegment => {
-      // console.log('phenixMediaSegment [%o]', phenixMediaSegment.slice())
-
       await videoTrackWriter.write(phenixMediaSegment)
     })
   }
@@ -69,17 +76,17 @@ async function main() {
       return true
     },
     encodedVideoStreamSink: (track: MediaStreamTrack, chunk: RTCEncodedVideoFrame) => {
-      // console.log('+++++ chunk [%o] ++++ ', chunk.data.byteLength)
-      extractor.extract(chunk.data)
+      console.log('+++++ chunk [%o] ++++ ', chunk.data.byteLength)
+      extractor.processVideoChunk(chunk.data)
       currentTimeDisplay.value = videoElement.currentTime.toString()
 
-      // console.log('\n')
+      console.log('\n')
 
       return videoWriteStatus
     }
   }
 
-  let channel = Channels.createChannel(channelOptions)
+  channel = Channels.createChannel(channelOptions)
 }
 
 main()

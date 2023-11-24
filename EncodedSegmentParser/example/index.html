@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
+    <style>
+      video {
+        width: 100vw;
+        height: 50vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <video id="video-1" width="100" height="100" style="background-color: black" autoplay muted controls />
+    </div>
+    <div>
+      <div>Current Time:<input type="text" id="current-time" readonly /></div>
+      <div>Lag:<input type="text" id="lag" readonly /></div>
+      <div>Buffered Start:<input type="text" id="buffered-start" readonly /></div>
+      <div>Buffered End:<input type="text" id="buffered-end" readonly /></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

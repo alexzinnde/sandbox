@@ -1,11 +1,9 @@
 import MseDecoder from './decode/decoder/MseDecoder'
-import TrackWriter from './decode/track/TrackWriter'
-import H264BitStream from './decode/extract/H264BitStream'
+import EmbeddedIsoBmffExtractor from './decode/extract/EmbeddedIsoBmffExtractor'
 
 export default {
   MseDecoder,
-  TrackWriter,
-  H264BitStream
+  EmbeddedIsoBmffExtractor
 }
 
-export { MseDecoder, TrackWriter, H264BitStream }
+export { MseDecoder, EmbeddedIsoBmffExtractor }

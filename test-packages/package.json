@@ -1,0 +1,14 @@
+{
+  "name": "test-packages",
+  "module": "index.ts",
+  "devDependencies": {
+    "bun-types": "latest",
+    "ts-node": "^10.9.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@zinntechniker/tools": "2023.0.14"
+  }
+}

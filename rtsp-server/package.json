@@ -1,0 +1,17 @@
+{
+  "name": "rtsp-server",
+  "module": "index.ts",
+  "scripts": {
+    "dev": "node src/index.js"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "rtsp-streaming-server": "^2.0.6"
+  }
+}

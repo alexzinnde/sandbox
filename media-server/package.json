@@ -1,0 +1,14 @@
+{
+  "name": "media-server",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "node-media-server": "^2.6.2"
+  }
+}
